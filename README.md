@@ -8,7 +8,7 @@ written in Go.
 
 1. Clone the repo
 2. Build the file `go build -o whatsnew main.go`
-3. Run `./whatsnew -c 5 | less`
+3. Run `./whatsnew | less`
 
 ```
 Usage of ./whatsnew:
@@ -18,3 +18,6 @@ Usage of ./whatsnew:
         word wrapping line width (default 120)
 
 ```
+
+For example, you can dump the entire parsed feed to a text file with:
+`./whatsnew -c 100 > rss_dump.txt`
