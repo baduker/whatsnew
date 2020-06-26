@@ -5,28 +5,42 @@ import (
 	"fmt"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/mmcdole/gofeed"
-	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 const whatsNewRSS = "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
 
-func wordWrap(text string, lineWidth int) (wrapped string) {
-	words := strings.Fields(strings.TrimSpace(text))
-	if len(words) == 0 {
-		return text
-	}
-	wrapped = words[0]
-	spaceLeft := lineWidth - len(wrapped)
-	for _, word := range words[1:] {
-		if len(word)+1 > spaceLeft {
-			wrapped += "\n" + word
-			spaceLeft = lineWidth - len(word)
-		} else {
-			wrapped += " " + word
-			spaceLeft -= 1 + len(word)
+func wordWrap(text string, lineWidth int) string {
+	wrap := make([]byte, 0, len(text)+2*len(text)/lineWidth)
+	eoLine := lineWidth
+	inWord := false
+	for i, j := 0, 0; ; {
+		r, size := utf8.DecodeRuneInString(text[i:])
+		if size == 0 && r == utf8.RuneError {
+			r = ' '
 		}
+		if unicode.IsSpace(r) {
+			if inWord {
+				if i >= eoLine {
+					wrap = append(wrap, '\n')
+					eoLine = len(wrap) + lineWidth
+				} else if len(wrap) > 0 {
+					wrap = append(wrap, ' ')
+				}
+				wrap = append(wrap, text[j:i]...)
+			}
+			inWord = false
+		} else if !inWord {
+			inWord = true
+			j = i
+		}
+		if size == 0 && r == ' ' {
+			break
+		}
+		i += size
 	}
-	return
+	return string(wrap)
 }
 
 func getFeeds(count int) []*gofeed.Item {
