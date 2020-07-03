@@ -55,8 +55,10 @@ func removeHTMLTags(item string) string {
 }
 
 func showFeeds(feeds []*gofeed.Item, lineLength int) {
-	for index, item := range feeds {
-		fmt.Printf("%d. %s\nPosted On: %s\n", index+1, item.Title, item.Published[:16])
+	last := len(feeds) - 1
+	for index := range feeds {
+		item := feeds[last-index]
+		fmt.Printf("-> %s\nPosted On: %s\n", wordWrap(item.Title, lineLength), item.Published[:16])
 		description := wordWrap(removeHTMLTags(item.Description), lineLength)
 		fmt.Printf("%s\n\n%s\n\n", item.Link, description)
 	}
