@@ -58,8 +58,12 @@ func showFeeds(feeds []*gofeed.Item, lineLength int) {
 	last := len(feeds) - 1
 	for index := range feeds {
 		item := feeds[last-index]
-		fmt.Printf("-> %s\nPosted On: %s\n", wordWrap(item.Title, lineLength), item.Published[:16])
+
+		title := wordWrap(item.Title, lineLength)
+		date := item.Published[:16]
 		description := wordWrap(removeHTMLTags(item.Description), lineLength)
+
+		fmt.Printf("-> %s\nPosted On: %s\n", title, date)
 		fmt.Printf("%s\n\n%s\n\n", item.Link, description)
 	}
 }
