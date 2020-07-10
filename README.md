@@ -5,7 +5,8 @@
 
 
 A super simple RSS feed fetcher for 
-[AWS What's new](https://aws.amazon.com/new/?nc1=f_cc&whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc) 
+[AWS What's New](https://aws.amazon.com/new/?nc1=f_cc&whats-new-content-all.sort-by=item.additionalFields
+.postDateTime&whats-new-content-all.sort-order=desc) 
 written in Go.
 
 By default, it shows the five most recent updates (out of a hundred).
@@ -14,7 +15,8 @@ I plan to support downloading all published news.
 
 ### Usage
 
-1. Clone the repo
+0. Get [Go](https://golang.org/dl/) and [install](https://golang.org/doc/install) it.
+1. Clone the repo.
 2. Build the file `go build -o whatsnew main.go`
 3. Run `./whatsnew | less`
 
@@ -33,4 +35,5 @@ For example, you can dump the entire  feed to a text file with:
 ### TODO:
 
 - Fetch and parse old news
+- Make use of API request and JSON
 - Add dump command (no need for piping)
