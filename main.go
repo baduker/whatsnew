@@ -2,17 +2,23 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/microcosm-cc/bluemonday"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
 )
 
-const whatsNewAPI = "https://aws.amazon.com/api/dirs/items/search?item.directoryId=whats-new&sort_by=item.additionalFields." +
-	"postDateTime&sort_order=desc&size=5&item.locale=en_US&page=0"
+const (
+	baseURL = "https://aws.amazon.com"
+	path    = "/api/dirs/items/search?"
+	query   = "item.directoryId=whats-new&sort_by=item.additionalFields.postDateTime&sort_order=desc&item.locale=en_US&"
+)
 
 type Data struct {
 	Metadata struct {
@@ -120,12 +126,31 @@ func fetch(url string) []byte {
 	return body
 }
 
+func buildURL(size string, page string) string {
+	v := url.Values{}
+	v.Set("size", size)
+	v.Set("page", page)
+
+	elems := []string{baseURL, path, query, v.Encode()}
+
+	fullURL, err := url.Parse(strings.Join(elems, ""))
+
+	if err != nil {
+		panic(err)
+	}
+
+	return fullURL.String()
+}
+
 func main() {
-	//count := flag.Int("c", 5, "number of feeds to show; max 100")
+	count := flag.String("c", "5", "number of feeds to show; max 100")
 	//wrap := flag.Int("w", 120, "word wrapping line width")
-	//flag.Parse()
+	flag.Parse()
+
 	d := Data{}
-	err := json.Unmarshal(fetch(whatsNewAPI), &d)
+	u := buildURL(*count, "0")
+	fmt.Println(u)
+	err := json.Unmarshal(fetch(u), &d)
 
 	if err != nil {
 		panic(err)
@@ -134,7 +159,7 @@ func main() {
 		headline := i.Item.AdditionalFields.Headline
 		date := i.Item.AdditionalFields.ModifiedDate
 		description := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), 120)
-		url := "https://aws.amazon.com" + i.Item.AdditionalFields.HeadlineURL
-		fmt.Printf("-> %s\nPublished: %s\n%s\n\n%s\n\n", headline, date, url, description)
+		link := "https://aws.amazon.com" + i.Item.AdditionalFields.HeadlineURL
+		fmt.Printf("-> %s\nPublished: %s\n%s\n\n%s\n\n", headline, date, link, description)
 	}
 }
