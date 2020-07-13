@@ -156,17 +156,20 @@ func getNews(data []byte) Data {
 
 func showNews(news Data, wrap int) {
 	for _, i := range news.Items {
+
 		headline := i.Item.AdditionalFields.Headline
-		date := i.Item.AdditionalFields.ModifiedDate
+		date := i.Item.AdditionalFields.ModifiedDate.String()[:10]
 		description := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), wrap)
 		link := "https://aws.amazon.com" + i.Item.AdditionalFields.HeadlineURL
 
-		fmt.Printf("-> %s\nPublished: %s\n%s\n\n%s\n\n", headline, date, link, description)
+		fmt.Printf("-> %s\nPublished: %s\n%s\n\n", headline, date, link)
+		fmt.Printf("%s\n\n", description)
 	}
 }
+
 func main() {
-	count := flag.String("c", "5", "number of feeds to show; max 100")
-	wrap := flag.Int("w", 120, "word wrapping line width")
+	count := flag.String("c", "25", "number of feeds to show")
+	wrap := flag.Int("w", 120, "line width")
 	flag.Parse()
 
 	showNews(getNews(fetch(buildURL(*count, "0"))), *wrap)
