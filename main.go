@@ -17,7 +17,8 @@ import (
 const (
 	baseURL = "https://aws.amazon.com"
 	path    = "/api/dirs/items/search?"
-	query   = "item.directoryId=whats-new&sort_by=item.additionalFields.postDateTime&sort_order=desc&item.locale=en_US&"
+	query   = "item.directoryId=whats-new&item.locale=en_US&"
+	sort    = "sort_by=item.additionalFields.postDateTime&sort_order=desc&"
 )
 
 type Data struct {
@@ -131,7 +132,7 @@ func buildURL(size string, page string) string {
 	v.Set("size", size)
 	v.Set("page", page)
 
-	elems := []string{baseURL, path, query, v.Encode()}
+	elems := []string{baseURL, path, query, sort, v.Encode()}
 
 	fullURL, err := url.Parse(strings.Join(elems, ""))
 
@@ -142,24 +143,31 @@ func buildURL(size string, page string) string {
 	return fullURL.String()
 }
 
-func main() {
-	count := flag.String("c", "5", "number of feeds to show; max 100")
-	//wrap := flag.Int("w", 120, "word wrapping line width")
-	flag.Parse()
-
+func getNews(data []byte) Data {
 	d := Data{}
-	u := buildURL(*count, "0")
-	fmt.Println(u)
-	err := json.Unmarshal(fetch(u), &d)
+	err := json.Unmarshal(data, &d)
 
 	if err != nil {
 		panic(err)
 	}
-	for _, i := range d.Items {
+
+	return d
+}
+
+func showNews(news Data, wrap int) {
+	for _, i := range news.Items {
 		headline := i.Item.AdditionalFields.Headline
 		date := i.Item.AdditionalFields.ModifiedDate
-		description := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), 120)
+		description := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), wrap)
 		link := "https://aws.amazon.com" + i.Item.AdditionalFields.HeadlineURL
+
 		fmt.Printf("-> %s\nPublished: %s\n%s\n\n%s\n\n", headline, date, link, description)
 	}
+}
+func main() {
+	count := flag.String("c", "5", "number of feeds to show; max 100")
+	wrap := flag.Int("w", 120, "word wrapping line width")
+	flag.Parse()
+
+	showNews(getNews(fetch(buildURL(*count, "0"))), *wrap)
 }
