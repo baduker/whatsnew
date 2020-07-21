@@ -110,7 +110,7 @@ func removeHTMLTags(item string) string {
 	return p.Sanitize(item)
 }
 
-func fetch(url string) []byte {
+func fetchData(url string) []byte {
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -133,7 +133,6 @@ func buildURL(size string, page string) string {
 	v.Set("page", page)
 
 	elems := []string{baseURL, path, query, sort, v.Encode()}
-
 	fullURL, err := url.Parse(strings.Join(elems, ""))
 
 	if err != nil {
@@ -156,21 +155,22 @@ func getNews(data []byte) Data {
 
 func showNews(news Data, wrap int) {
 	for _, i := range news.Items {
-
 		headline := i.Item.AdditionalFields.Headline
-		date := i.Item.AdditionalFields.ModifiedDate.String()[:10]
-		description := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), wrap)
-		link := "https://aws.amazon.com" + i.Item.AdditionalFields.HeadlineURL
+		year, month, day := i.Item.AdditionalFields.ModifiedDate.Date()
+		date := fmt.Sprintf("%d/%d/%d\n", year, month, day)
+		postBody := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), wrap)
+		link := fmt.Sprintf("https://aws.amazon.com%s", i.Item.AdditionalFields.HeadlineURL)
 
-		fmt.Printf("-> %s\nPublished: %s\n%s\n\n", headline, date, link)
-		fmt.Printf("%s\n\n", description)
+		fmt.Printf("%s\nPublished: %s%s\n\n", headline, date, link)
+		fmt.Printf("%s\n\n", postBody)
 	}
 }
 
 func main() {
 	count := flag.String("c", "25", "number of feeds to show")
+	page := flag.String("p", "0", "page number")
 	wrap := flag.Int("w", 120, "line width")
 	flag.Parse()
 
-	showNews(getNews(fetch(buildURL(*count, "0"))), *wrap)
+	showNews(getNews(fetchData(buildURL(*count, *page))), *wrap)
 }
