@@ -24,10 +24,11 @@ the news items by a product or service.
 ```
 Usage of ./whatsnew:
   -c string
-        number of feeds to show (default 25)
+        number of feeds to show (default "25")
+  -p string
+        page number (default "0")
   -w int
-        word wrapping line width (default 120)
-
+        line width (default 120)
 ```
 
 For example, you can dump the output to a text file with:
