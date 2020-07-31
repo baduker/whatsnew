@@ -36,6 +36,7 @@ type Data struct {
 		Headline     string `json:"headline"`
 		ContentType  string `json:"contentType"`
 	} `json:"fieldTypes"`
+	// TODO: Use slice of pointers -> []*Items
 	Items []struct {
 		Tags []struct {
 			TagNamespaceID string `json:"tagNamespaceId"`
@@ -132,8 +133,8 @@ func buildURL(size string, page string) string {
 	v.Set("size", size)
 	v.Set("page", page)
 
-	elems := []string{baseURL, path, query, sort, v.Encode()}
-	fullURL, err := url.Parse(strings.Join(elems, ""))
+	elements := []string{baseURL, path, query, sort, v.Encode()}
+	fullURL, err := url.Parse(strings.Join(elements, ""))
 
 	if err != nil {
 		panic(err)
@@ -154,15 +155,20 @@ func getNews(data []byte) Data {
 }
 
 func showNews(news Data, wrap int) {
-	for _, i := range news.Items {
-		headline := i.Item.AdditionalFields.Headline
-		year, month, day := i.Item.AdditionalFields.ModifiedDate.Date()
-		date := fmt.Sprintf("%d/%d/%d\n", year, month, day)
-		postBody := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), wrap)
-		link := fmt.Sprintf("https://aws.amazon.com%s", i.Item.AdditionalFields.HeadlineURL)
+	dt := time.Now()
 
-		fmt.Printf("%s\nPublished: %s%s\n\n", headline, date, link)
-		fmt.Printf("%s\n\n", postBody)
+	for index, i := range news.Items {
+		date := i.Item.AdditionalFields.PostDateTime.Format("01-02-2006")
+		// TODO: Add filtering
+		if dt.Format("01-02-2006") == date {
+			headline := i.Item.AdditionalFields.Headline
+			postBody := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), wrap)
+			link := fmt.Sprintf("https://aws.amazon.com%s", i.Item.AdditionalFields.HeadlineURL)
+			fmt.Printf("%d. %s\nPublished: %s\n%s\n\n", index+1, headline, date, link)
+			fmt.Printf("%s\n\n", postBody)
+		} else {
+			continue
+		}
 	}
 }
 
@@ -170,7 +176,10 @@ func main() {
 	count := flag.String("c", "25", "number of feeds to show")
 	page := flag.String("p", "0", "page number")
 	wrap := flag.Int("w", 120, "line width")
+	// TODO: add filtering news just for today, if available else show info: no news
+	//today := flag.Bool("t", false, "shows news for today if available")
 	flag.Parse()
 
-	showNews(getNews(fetchData(buildURL(*count, *page))), *wrap)
+	news := getNews(fetchData(buildURL(*count, *page)))
+	showNews(news, *wrap)
 }
