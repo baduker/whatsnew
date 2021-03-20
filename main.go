@@ -21,6 +21,7 @@ const (
 	sort    = "sort_by=item.additionalFields.postDateTime&sort_order=desc&"
 )
 
+// Data is a container for aws.amazon.com API response
 type Data struct {
 	Metadata struct {
 		Count     int `json:"count"`
@@ -74,6 +75,7 @@ type Data struct {
 	} `json:"items"`
 }
 
+// wordWrap wraps a body of text to a given line width
 func wordWrap(text string, lineWidth int) string {
 	wrap := make([]byte, 0, len(text)+2*len(text)/lineWidth)
 	eoLine := lineWidth
@@ -106,11 +108,13 @@ func wordWrap(text string, lineWidth int) string {
 	return string(wrap)
 }
 
+// removeHTMLTags cleans up the API item from unwanted HTML tags
 func removeHTMLTags(item string) string {
 	p := bluemonday.StripTagsPolicy()
 	return p.Sanitize(item)
 }
 
+// fetchData fetches data from a given URL
 func fetchData(url string) []byte {
 	resp, err := http.Get(url)
 
@@ -128,6 +132,8 @@ func fetchData(url string) []byte {
 	return body
 }
 
+// buildURL constructs a valid API URL given page number and its size
+// It's used to paginate the API.
 func buildURL(size string, page string) string {
 	v := url.Values{}
 	v.Set("size", size)
@@ -143,6 +149,7 @@ func buildURL(size string, page string) string {
 	return fullURL.String()
 }
 
+// getNews unmarshals the API response to the Data container
 func getNews(data []byte) Data {
 	d := Data{}
 	err := json.Unmarshal(data, &d)
@@ -154,20 +161,21 @@ func getNews(data []byte) Data {
 	return d
 }
 
+// showNews parses and displays the Data container items
 func showNews(news Data, wrap int) {
-	dt := time.Now()
+	today := time.Now().Format("01-02-2006")
 
 	for index, i := range news.Items {
 		date := i.Item.AdditionalFields.PostDateTime.Format("01-02-2006")
 		// TODO: Add filtering
-		if dt.Format("01-02-2006") == date {
+		if date == today {
 			headline := i.Item.AdditionalFields.Headline
 			postBody := wordWrap(removeHTMLTags(i.Item.AdditionalFields.PostBody), wrap)
 			link := fmt.Sprintf("https://aws.amazon.com%s", i.Item.AdditionalFields.HeadlineURL)
 			fmt.Printf("%d. %s\nPublished: %s\n%s\n\n", index+1, headline, date, link)
 			fmt.Printf("%s\n\n", postBody)
 		} else {
-			continue
+			fmt.Println("There are no news for today.")
 		}
 	}
 }
@@ -177,7 +185,6 @@ func main() {
 	page := flag.String("p", "0", "page number")
 	wrap := flag.Int("w", 120, "line width")
 	// TODO: add filtering news just for today, if available else show info: no news
-	//today := flag.Bool("t", false, "shows news for today if available")
 	flag.Parse()
 
 	news := getNews(fetchData(buildURL(*count, *page)))
